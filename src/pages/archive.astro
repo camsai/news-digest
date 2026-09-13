@@ -1,0 +1,18 @@
+---
+import PublicationLayout from "../layouts/PublicationLayout.astro";
+import ArticleList from "../components/ArticleList.astro";
+import { publishedArticles } from "../lib/publication";
+const articles = await publishedArticles();
+---
+
+<PublicationLayout title="Archive">
+    <header class="page-heading">
+        <p class="eyebrow">The complete collection</p>
+        <h1>The archive.</h1>
+        <p>
+            Weekly editions and occasional field notes, with the original sources always close at
+            hand.
+        </p>
+    </header>
+    <ArticleList articles={articles} />
+</PublicationLayout>

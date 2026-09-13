@@ -1,0 +1,17 @@
+name: Publication functionality
+description: Propose a change to the website or research workflow.
+title: "[Feature] "
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What should the publication do?
+      description: Describe the reader or editor problem and the desired behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: How would we know it works?
+    validations:
+      required: true

@@ -1,0 +1,45 @@
+name: Suggest a story or featured capability
+description: Nominate a paper, release, dataset, or capability for coverage.
+title: "[Story] "
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Primary source URL
+      description: Link to the original paper, release notes, or project announcement.
+    validations:
+      required: true
+  - type: input
+    id: date
+    attributes:
+      label: Publication or release date
+      placeholder: YYYY-MM-DD
+    validations:
+      required: true
+  - type: textarea
+    id: relevance
+    attributes:
+      label: What changed and why it matters for materials
+    validations:
+      required: true
+  - type: dropdown
+    id: treatment
+    attributes:
+      label: Requested treatment
+      options:
+        - Brief mention
+        - Featured capability or story
+    validations:
+      required: true
+  - type: input
+    id: affiliation
+    attributes:
+      label: Affiliation or relationship to the work
+      description: Write none if you have no connection.
+    validations:
+      required: true
+  - type: input
+    id: edition
+    attributes:
+      label: Target edition (optional)
+      placeholder: YYYY-MM-DD (Monday)

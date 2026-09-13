@@ -1,0 +1,75 @@
+name: Draft weekly edition
+on:
+  schedule:
+    - cron: "17 13 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: weekly-editorial
+  cancel-in-progress: false
+jobs:
+  draft:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Determine edition and preserve existing editorial work
+        id: edition
+        shell: bash
+        run: |
+          edition_date=$(node -e 'const date = new Date(); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7)); process.stdout.write(date.toISOString().slice(0, 10));')
+          echo "date=$edition_date" >> "$GITHUB_OUTPUT"
+          if test -f "src/content/articles/$edition_date-weekly-digest.md" || test -n "$(git ls-remote --heads origin "editorial/$edition_date")"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "An edition or editorial branch already exists for $edition_date. Preserving it; review the existing draft." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - if: steps.edition.outputs.exists != 'true'
+        run: npm ci
+      - name: Research and draft
+        if: steps.edition.outputs.exists != 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          GITHUB_TOKEN: ${{ github.token }}
+          EDITION_DATE: ${{ steps.edition.outputs.date }}
+        run: npm run digest -- --date "$EDITION_DATE" --log-level info
+      - name: Validate generated content before opening a PR
+        if: steps.edition.outputs.exists != 'true'
+        run: npm run format && npm run check && npm test && npm run build
+      - name: Save the reviewed-workflow outputs
+        if: steps.edition.outputs.exists != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: editorial-draft-${{ steps.edition.outputs.date }}
+          path: |
+            src/content/articles/*-weekly-digest.md
+            data/research/**
+          retention-days: 14
+      - name: Open editorial draft
+        if: steps.edition.outputs.exists != 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: editorial/${{ steps.edition.outputs.date }}
+          base: main
+          commit-message: "Draft weekly edition ${{ steps.edition.outputs.date }}"
+          title: "Weekly edition: ${{ steps.edition.outputs.date }}"
+          draft: true
+          add-paths: |
+            src/content/articles/*-weekly-digest.md
+            data/research/**
+          body: |
+            AI-assisted editorial draft. Generation, schema validation, tests, and build ran in the originating workflow.
+
+            Review the article and its data/research evidence record. Check every claim, date, source type, limitation, contributor affiliation, and previous coverage. Read coverageGaps and usage in the evidence record.
+
+            Keep this PR in draft until review is complete. Change article status to published and remove the editorial-draft notice before merging. After successful Pages deployment, mark originating issues editorial:published and close them.
