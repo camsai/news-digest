@@ -190,10 +190,26 @@ export async function runCopilot(prompt: string): Promise<string> {
             },
         );
         return stdout;
-    } catch {
+    } catch (error) {
         // Do not include subprocess output or its prompt (which includes private submissions).
+        const failure = error as { stderr?: string; code?: string | number; killed?: boolean };
+        const diagnostic = failure.stderr ?? "";
+        const categories = [
+            ["authentication", /authenticat|unauthorized|401|token/i],
+            [
+                "organization policy or entitlement",
+                /403|forbidden|policy|subscription|entitle|license|billing/i,
+            ],
+            ["tool permission", /permission|allow-all-tools|denied/i],
+            ["CLI configuration", /HOME|directory|ENOENT|unknown option|invalid argument/i],
+            ["model selection", /model.*(?:not|invalid|unavailable)/i],
+            ["network", /fetch failed|ENOTFOUND|ECONN|network/i],
+        ] as const;
+        const reasons = categories
+            .filter(([, pattern]) => pattern.test(diagnostic))
+            .map(([name]) => name);
         throw new Error(
-            "Copilot generation failed; check organization access, billing, CLI compatibility, and timeout",
+            `Copilot generation failed (exit ${failure.code ?? "unknown"}; timeout ${Boolean(failure.killed)}; categories: ${reasons.join(", ") || "unclassified"}). Check organization access and CLI configuration.`,
         );
     } finally {
         await rm(directory, { recursive: true, force: true });
