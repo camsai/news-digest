@@ -14,11 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
+      copilot-requests: write
       issues: read
+    outputs:
+      date: ${{ steps.edition.outputs.date }}
+      exists: ${{ steps.edition.outputs.exists }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -26,10 +31,13 @@ jobs:
       - name: Determine edition and preserve existing editorial work
         id: edition
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           edition_date=$(node -e 'const date = new Date(); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7)); process.stdout.write(date.toISOString().slice(0, 10));')
           echo "date=$edition_date" >> "$GITHUB_OUTPUT"
-          if test -f "src/content/articles/$edition_date-weekly-digest.md" || test -n "$(git ls-remote --heads origin "editorial/$edition_date")"; then
+          matching_branches=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/editorial/$edition_date" --jq length)
+          if test -f "src/content/articles/$edition_date-weekly-digest.md" || test "$matching_branches" -gt 0; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
             echo "An edition or editorial branch already exists for $edition_date. Preserving it; review the existing draft." >> "$GITHUB_STEP_SUMMARY"
           fi
@@ -38,8 +46,8 @@ jobs:
       - name: Research and draft
         if: steps.edition.outputs.exists != 'true'
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
           GITHUB_TOKEN: ${{ github.token }}
           EDITION_DATE: ${{ steps.edition.outputs.date }}
         run: npm run digest -- --date "$EDITION_DATE" --log-level info
@@ -52,17 +60,30 @@ jobs:
         with:
           name: editorial-draft-${{ steps.edition.outputs.date }}
           path: |
-            src/content/articles/*-weekly-digest.md
-            data/research/**
+            src/content/articles/${{ steps.edition.outputs.date }}-weekly-digest.md
+            data/research/${{ steps.edition.outputs.date }}/evidence.json
           retention-days: 14
+  open-draft:
+    needs: draft
+    if: needs.draft.outputs.exists != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: editorial-draft-${{ needs.draft.outputs.date }}
+          path: .
       - name: Open editorial draft
-        if: steps.edition.outputs.exists != 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          branch: editorial/${{ steps.edition.outputs.date }}
+          branch: editorial/${{ needs.draft.outputs.date }}
           base: main
-          commit-message: "Draft weekly edition ${{ steps.edition.outputs.date }}"
-          title: "Weekly edition: ${{ steps.edition.outputs.date }}"
+          commit-message: "Draft weekly edition ${{ needs.draft.outputs.date }}"
+          title: "Weekly edition: ${{ needs.draft.outputs.date }}"
           draft: true
           add-paths: |
             src/content/articles/*-weekly-digest.md

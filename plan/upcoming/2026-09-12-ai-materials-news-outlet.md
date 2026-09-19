@@ -1,7 +1,9 @@
 # AI for materials weekly publication
 
-**Created:** 2026-09-12  
-**Updated:** 2026-09-13  
+**Created:** 2026-09-12
+
+**Updated:** 2026-09-19
+
 **Tracking:** [Project issue #1](https://github.com/camsai/news-digest/issues/1)
 
 ## Status
@@ -10,8 +12,8 @@ Current product name: **Material Intelligence**. The user requested a dark theme
 purely AI-generated authorship. These are implemented locally. The site does not claim human
 fact-checking. Publication approval remains separate from authorship.
 
-The [GitHub-native generation proposal](2026-09-12-github-native-generation.md) documents the
-requested keyless Copilot route; the current OpenAI adapter is unchanged pending that migration.
+The [GitHub-native generation implementation](../review/2026-09-12-github-native-generation.md) documents the
+keyless Copilot route, now implemented on the branch with curated source collection. Authenticated Actions testing remains pending.
 [Custom-domain instructions](../../docs/hosting.md) cover `digest.example.com`; DNS is unchanged.
 
 Agreed direction. Repository and empty `main` created; initial implementation is local on
@@ -41,10 +43,10 @@ autonomous laboratories, simulation workflows, datasets, and relevant software.
 - Intended production URL: https://camsai.github.io/news-digest/
 - Astro static website, Markdown articles, TypeScript research application.
 - GitHub Actions: validation, weekly research, and Pages deployment on merge to main.
-- External AI/search API credentials live in Actions secrets, never in site output.
+- Copilot uses the ephemeral Actions token; no external AI/search API credentials are needed.
 - No database or always-running server initially. Git stores articles and evidence records.
 - Homepage, article pages, archive, topic pages, RSS, and editorial policy.
-- Optional custom domain later. Start with a $20/month API budget target; measure actual use.
+- Optional custom domain later. Set an organization Copilot budget; measure actual usage during the pilot.
 
 ## Research pipeline
 
@@ -58,9 +60,9 @@ autonomous laboratories, simulation workflows, datasets, and relevant software.
 8. Open or update one editorial draft PR per edition. Never auto-merge during the pilot.
 9. An editor reviews facts and changes publication status; merge builds and deploys the site.
 
-Initial integration: OpenAI Responses API web search with bounded tool/output usage and a
-separate structured drafting request. Keep the provider behind an interface. The first version
-uses configured sources as search seeds; direct feed/API adapters follow after the pilot.
+Current integration: Copilot CLI authenticated by the Actions token, with independent arXiv
+and GitHub release collection. Broader search coverage and authenticated pilot runs remain open.
+The current collectors use configured public endpoints, with broader coverage deferred.
 Schema and provenance checks are not independent factual verification: an editor must check
 claims against the underlying sources before publication.
 

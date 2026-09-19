@@ -1,19 +1,16 @@
 {
     "lookbackDays": 14,
-    "maximumSearchCalls": 8,
-    "maximumOutputTokens": 9000,
-    "sourceSeeds": [
-        "https://arxiv.org/",
-        "https://www.nature.com/subjects/materials-science",
-        "https://materialsproject.org/",
-        "https://deepmind.google/",
-        "https://www.microsoft.com/en-us/research/project/materials/",
-        "https://github.com/"
-    ],
     "searchTopics": [
         "AI materials discovery crystal generation new paper release",
         "machine learning interatomic potentials materials simulation new model",
         "autonomous laboratory materials synthesis AI new results",
         "materials science datasets open source software AI release"
+    ],
+    "maximumCandidates": 60,
+    "sourceFeeds": [
+        "https://export.arxiv.org/api/query",
+        "https://api.github.com/repos/ACEsuit/mace/releases",
+        "https://api.github.com/repos/materialsproject/pymatgen/releases",
+        "https://api.github.com/repos/deepmodeling/deepmd-kit/releases"
     ]
 }

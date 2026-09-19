@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { zodTextFormat } from "openai/helpers/zod";
 import { readFile } from "node:fs/promises";
 import { canonicalUrl, dateSchema, publicUrlSchema } from "../../src/lib/editorial";
 import {
     editionDate,
-    digestSchema,
     validateResearch,
     type ResearchResult,
     type ResearchRequest,
@@ -18,18 +16,15 @@ const request: ResearchRequest = {
     editionDate: "2026-09-07",
     settings: {
         lookbackDays: 14,
-        maximumSearchCalls: 8,
-        maximumOutputTokens: 9000,
-        sourceSeeds: [],
+        maximumCandidates: 60,
+        sourceFeeds: [],
         searchTopics: [],
     },
     submissions: [],
     previouslyPublishedUrls: [],
 };
 
-test("the API schema avoids unsupported URI formats while runtime validation checks URLs", () => {
-    const format = zodTextFormat(digestSchema, "weekly_digest");
-    assert.doesNotMatch(JSON.stringify(format.schema), /"format":"uri"/);
+test("runtime validation checks model source URLs", () => {
     const modified = structuredClone(fixture);
     modified.digest.stories[0].sources[0].url = "javascript:alert(1)";
     assert.throws(() => validateResearch(modified, request));

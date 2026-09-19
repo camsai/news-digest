@@ -29,7 +29,7 @@ test("offline generation creates an unpublished draft and evidence, then refuses
             ...process.env,
             GITHUB_STEP_SUMMARY: "",
             GITHUB_TOKEN: "",
-            OPENAI_API_KEY: "",
+            COPILOT_GITHUB_TOKEN: "",
         };
         await execute(process.execPath, argumentsList, { cwd: directory, env: environment });
         const article = matter(

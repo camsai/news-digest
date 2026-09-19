@@ -7,7 +7,7 @@ import { readArticles, readSubmissions } from "./content";
 import { createLogger } from "./logger";
 import {
     editionDate,
-    OpenAIResearchProvider,
+    CopilotResearchProvider,
     validateResearch,
     type ResearchRequest,
     type ResearchResult,
@@ -66,6 +66,10 @@ async function approvedIssues(date: string): Promise<Submission[]> {
             submissions.push({
                 id: `issue:${issue.number}`,
                 title: issue.title,
+                url: issue.body?.match(/### Primary source URL\s+(https:\/\/\S+)/)?.[1],
+                affiliation: issue.body?.match(
+                    /### Affiliation or relationship to the work\s+([^\n]+)/,
+                )?.[1],
                 relevance: (issue.body ?? "").slice(0, 6000),
                 treatment: issue.labels.some((label) => label.name === "editorial:featured")
                     ? "feature"
@@ -94,9 +98,8 @@ try {
     const settings = z
         .object({
             lookbackDays: z.number().int().min(7).max(30),
-            maximumSearchCalls: z.number().int().min(1).max(12),
-            maximumOutputTokens: z.number().int().min(1000).max(16000),
-            sourceSeeds: z.array(z.url()).max(30),
+            maximumCandidates: z.number().int().min(1).max(100),
+            sourceFeeds: z.array(z.url()).min(1).max(12),
             searchTopics: z.array(z.string()).max(10),
         })
         .parse(JSON.parse(await readFile("config/research.json", "utf8")));
@@ -122,11 +125,7 @@ try {
     if (values.fixture) {
         result = JSON.parse(await readFile(values.fixture, "utf8"));
     } else {
-        const apiKey = process.env.OPENAI_API_KEY;
-        const model = process.env.OPENAI_MODEL;
-        if (!apiKey || !model)
-            throw new Error("Set OPENAI_API_KEY and OPENAI_MODEL to run live research");
-        result = await new OpenAIResearchProvider(apiKey, model).research(request);
+        result = await new CopilotResearchProvider().research(request);
     }
     const digest = validateResearch(result, request);
     const metadata = articleSchema.parse({

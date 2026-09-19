@@ -1,7 +1,9 @@
 # Publication foundation and initial research workflow
 
-**Created:** 2026-09-12  
-**Updated:** 2026-09-13  
+**Created:** 2026-09-12
+
+**Updated:** 2026-09-19
+
 **Tracking:** [Project issue #1](https://github.com/camsai/news-digest/issues/1)
 
 ## Status
@@ -9,7 +11,7 @@
 Follow-up changes: renamed to **Material Intelligence**, applied a dark palette, and disclosed
 entirely AI-generated articles without independent human fact-checking. Added custom-domain
 build variables and documentation for `digest.example.com`. Copilot migration is researched in
-`plan/upcoming/2026-09-12-github-native-generation.md`; the generator still uses OpenAI.
+`plan/review/2026-09-12-github-native-generation.md`; the generator now uses Copilot; authenticated Actions testing remains pending.
 
 Implementation is being submitted for PR review on `feature/publication-foundation` following
 the explicit commit/PR request on 2026-09-13. The repository is now private. `main` remains at
