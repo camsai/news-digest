@@ -1,0 +1,58 @@
+---
+import { render } from "astro:content";
+import PublicationLayout from "../../layouts/PublicationLayout.astro";
+import { pathTo, publishedArticles, repositoryUrl } from "../../lib/publication";
+import { formatDate, topicSlug } from "../../lib/editorial";
+export async function getStaticPaths() {
+    return (await publishedArticles()).map((article) => ({
+        params: { id: article.id },
+        props: { article },
+    }));
+}
+const { article } = Astro.props;
+const { Content } = await render(article);
+---
+
+<PublicationLayout title={article.data.title} description={article.data.description}>
+    <header class="article-heading">
+        <a class="eyebrow" href={pathTo("archive/")}>
+            ← The reading room
+        </a>
+        <p class="eyebrow article-date">
+            {article.data.kind} ·{" "}
+            <time datetime={article.data.date}>{formatDate(article.data.date)}</time>
+        </p>
+        <h1>{article.data.title}</h1>
+        <p class="article-description">{article.data.description}</p>
+        <div class="tags">
+            {article.data.topics.map((topic) => (
+                <a href={pathTo(`topics/${topicSlug(topic)}/`)}>{topic}</a>
+            ))}
+        </div>
+    </header>
+    <div class="article-body">
+        <Content />
+    </div>
+    <aside class="source-records">
+        <p class="eyebrow">Follow the evidence</p>
+        <h2>Original sources</h2>
+        <ol>
+            {article.data.sources.map((source) => (
+                <li>
+                    <a href={source.url}>{source.title} ↗</a>
+                    <p>
+                        {source.type} · {source.access}
+                        {source.publishedAt && ` · ${formatDate(source.publishedAt)}`}
+                    </p>
+                </li>
+            ))}
+        </ol>
+        <p>
+            Entirely AI-generated. Not independently human fact-checked.{" "}
+            <a href={pathTo("about/")}>Read our editorial policy.</a> Found an error?{" "}
+            <a href={`${repositoryUrl}/issues/new?template=correction.yml`}>
+                Request a correction.
+            </a>
+        </p>
+    </aside>
+</PublicationLayout>

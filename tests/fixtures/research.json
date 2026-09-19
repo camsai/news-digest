@@ -1,0 +1,32 @@
+{
+    "digest": {
+        "title": "A test edition for materials research",
+        "description": "A deterministic fixture for validating research provenance and editorial drafting.",
+        "overview": "This is synthetic test content, never intended for publication.",
+        "stories": [
+            {
+                "title": "A synthetic materials software release",
+                "summary": "This synthetic fixture describes a software release solely to test the editorial pipeline.",
+                "whyItMatters": "The fixture allows the pipeline to be validated without network access or API spending.",
+                "limitation": "This is not real news and provides no scientific evidence about an actual release.",
+                "topic": "Data and software",
+                "featured": false,
+                "sources": [
+                    {
+                        "title": "Synthetic primary source",
+                        "url": "https://example.org/materials-release",
+                        "publishedAt": "2026-09-05",
+                        "type": "Software release",
+                        "access": "Full text",
+                        "evidence": "Synthetic evidence used only for testing schema and provenance validation."
+                    }
+                ],
+                "submissionIds": []
+            }
+        ],
+        "coverageGaps": ["Synthetic test content; do not publish."]
+    },
+    "consultedUrls": ["https://example.org/materials-release"],
+    "usage": { "fixture": true },
+    "researchNotes": "Synthetic notes for offline testing."
+}

@@ -1,0 +1,22 @@
+---
+import PublicationLayout from "../../layouts/PublicationLayout.astro";
+import ArticleList from "../../components/ArticleList.astro";
+import { publishedArticles } from "../../lib/publication";
+import { topics, topicSlug } from "../../lib/editorial";
+export function getStaticPaths() {
+    return topics.map((topic) => ({ params: { topic: topicSlug(topic) }, props: { topic } }));
+}
+const { topic } = Astro.props;
+const articles = (await publishedArticles()).filter((article) =>
+    article.data.topics.includes(topic),
+);
+---
+
+<PublicationLayout title={topic}>
+    <header class="page-heading">
+        <p class="eyebrow">On our radar</p>
+        <h1>{topic}.</h1>
+        <p>Research and developments from this part of the field.</p>
+    </header>
+    <ArticleList articles={articles} />
+</PublicationLayout>

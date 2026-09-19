@@ -1,0 +1,15 @@
+---
+import PublicationLayout from "../layouts/PublicationLayout.astro";
+import { pathTo } from "../lib/publication";
+---
+
+<PublicationLayout title="Page not found">
+    <header class="page-heading">
+        <p class="eyebrow">404</p>
+        <h1>Uncharted territory.</h1>
+        <p>This page is not part of the publication.</p>
+        <a class="text-link" href={pathTo()}>
+            Return to the reading room →
+        </a>
+    </header>
+</PublicationLayout>

@@ -1,0 +1,16 @@
+name: Article correction
+description: Report a factual error with supporting evidence.
+title: "[Correction] "
+body:
+  - type: input
+    id: article
+    attributes:
+      label: Article URL
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: Correction and supporting primary source
+    validations:
+      required: true

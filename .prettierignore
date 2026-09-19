@@ -1,0 +1,6 @@
+AGENTS.md
+package-lock.json
+dist
+.astro
+agents/workdir
+plan/README.md
