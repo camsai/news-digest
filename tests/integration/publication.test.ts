@@ -68,6 +68,13 @@ test("static publication excludes drafts and future articles, strips raw HTML, a
             }
         }
         const feed = await readFile(`${directory}/dist/rss.xml`, "utf8");
+        const homepage = await readFile(`${directory}/dist/index.html`, "utf8");
+        assert.ok(homepage.includes(article.data.title), "Launch article must appear on homepage");
+        assert.ok(feed.includes(article.data.title), "Launch article must appear in RSS");
+        assert.ok(
+            filenames.includes("articles/2026-09-12-a-map-of-ai-for-materials/index.html"),
+            "Launch article must have a published page",
+        );
         assert.match(feed, /https:\/\/camsai.github.io\/news-digest\/articles\//);
         assert.doesNotMatch(filenames.join("\n"), /unpublished-fixture|future-fixture/);
     } finally {

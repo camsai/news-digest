@@ -10,7 +10,8 @@
 
 Implemented on the publication branch; authenticated Copilot generation in Actions and the
 publication pilot remain unproven. Main remains the empty bootstrap and the repository remains
-private. This change does not deploy or authorize publication.
+private. Publication of the launch article is now authorized on PR merge, but private-repository
+Pages is blocked by the organization plan; see ../upcoming/2026-09-19-private-pages-launch.md.
 
 ## Implementation
 

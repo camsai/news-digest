@@ -1,6 +1,10 @@
 # Hosting Material Intelligence on a custom domain
 
-The site remains a static GitHub Pages publication. A custom domain changes its address,
+GitHub Pages setup is currently blocked: CAMSAI’s plan does not support this private repository
+(verified by the Pages API returning HTTP 422). A plan supporting private-repository Pages is
+required before deployment; a custom domain does not remove that requirement.
+
+The site is designed as a static GitHub Pages publication. A custom domain changes its address,
 not where the weekly research runs. GitHub Actions continues to generate and build the site.
 
 The example below produces **https://digest.example.com/**. These instructions do not activate

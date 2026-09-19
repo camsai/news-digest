@@ -13,7 +13,8 @@ does not change their AI authorship or establish scientific accuracy.
 
 ## Current state
 
-The repository is private while the implementation is under review. No deployment is requested.
+The repository is private while the implementation is under review. Merging this PR into main
+is intended to publish the launch article automatically.
 
 The repository was transferred to CAMSAI on 2026-09-13. Its default publication address is
 https://camsai.github.io/news-digest/; no custom domain is configured.
@@ -21,7 +22,10 @@ https://camsai.github.io/news-digest/; no custom domain is configured.
 Initial implementation lives on `feature/publication-foundation`. `main` deliberately contains
 only an empty initial commit. The site and schedule are not live until reviewed code is merged.
 The launch article is explicitly labeled retrospective background, not fresh weekly news.
-GitHub Pages is configured for Actions deployment and the three editorial labels exist.
+The three editorial labels exist. Pages is currently unavailable: GitHub rejected setup with
+HTTP 422 because CAMSAI’s current plan does not support Pages for this private repository.
+Keep the repository private; enable a plan supporting private-repository Pages before merging
+to launch. The deployment workflow configures Pages and deploys on pushes to main.
 Workflow-created PRs are not enabled: GitHub combines PR creation and review approval in
 one setting, and automatic approval review rejected enabling that broader permission without
 explicit user approval. The weekly workflow retains its validated draft as a downloadable
@@ -51,8 +55,11 @@ select Python with pyenv and install it in `agents/workdir/venv`; do not install
 ## Publishing setup
 
 1. Review the implementation and merge it into `main` when ready to launch.
-2. Pages is already configured with **GitHub Actions** as the build source.
+2. Resolve the private-repository Pages plan requirement. The workflow then enables Pages
+   with **GitHub Actions** as the build source.
 3. The Publish workflow validates and deploys the static `dist/` artifact on pushes to main.
+   This includes the published launch article, “From predicting crystals to designing them,”
+   on the homepage, article page and RSS. It does not wait for Copilot or a weekly draft.
 4. With explicit approval, enable **Allow GitHub Actions to create and approve pull requests**
    in Settings → Actions → General. This is a combined GitHub permission; the supplied workflow
    creates draft PRs and contains no step that approves reviews or merges them.
