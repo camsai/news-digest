@@ -1,0 +1,29 @@
+name: Check Copilot access
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  copilot-requests: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Verify native Copilot access without source data or repository writes
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_HOME: ${{ runner.temp }}/copilot-access
+          COPILOT_CACHE_HOME: ${{ runner.temp }}/copilot-cache
+        run: >-
+          ./node_modules/.bin/copilot -p "Reply only with OK. Do not use tools."
+          -s --model auto --no-ask-user --no-custom-instructions --disable-builtin-mcps
+          --available-tools=web_fetch --deny-tool=url --deny-tool=shell --deny-tool=write
+          --deny-tool=read --no-auto-update --no-remote-export
