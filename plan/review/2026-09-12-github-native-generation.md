@@ -2,16 +2,26 @@
 
 **Created:** 2026-09-12
 
-**Updated:** 2026-09-19
+**Updated:** 2026-09-20
 
 **Tracking:** [Project issue #1](https://github.com/camsai/news-digest/issues/1)
 
 ## Status
 
-Implemented on the publication branch; authenticated Copilot generation in Actions and the
-publication pilot remain unproven. Main remains the empty bootstrap and the repository remains
-private. Publication of the launch article is now authorized on PR merge, but private-repository
-Pages is blocked by the organization plan; see ../upcoming/2026-09-19-private-pages-launch.md.
+The repository is public and Pages is live. Authenticated generation, source validation,
+tests and build passed in Actions run 35496396445. The September 14 edition has been
+reviewed by AI against the collected abstracts and prepared for publication; deployment
+verification is still required. No human fact-check is claimed.
+
+The authentication design below was superseded: both workflows use the organization secret
+`TB_COPILOT_TOKEN_01` as `COPILOT_GITHUB_TOKEN`, billed through the token owner's Copilot seat.
+The built-in workflow token remains separate for repository operations. No
+`copilot-requests: write` permission is requested. The pinned CLI's structured event output
+is parsed using its final assistant message; cited metadata is hydrated from collected records.
+
+Automatic PR creation failed because the combined create/approve setting remains disabled.
+This pilot uses a normal user-authenticated publication PR without changing that setting.
+Recurring draft PR delivery and billing review remain open.
 
 ## Implementation
 
