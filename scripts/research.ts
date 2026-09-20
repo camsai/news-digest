@@ -46,9 +46,10 @@ const selectionSchema = digestSchema.extend({
 
 export function parseDigestResponse(response: string, sources: FeedSource[]): Digest {
     const text = response.trim();
-    const fenced = text.match(/^```(?:json)?\s*\n([\s\S]*?)\n```$/i);
+    const blocks = [...text.matchAll(/```(?:json)?\s*\n([\s\S]*?)\n```/gi)];
+    const candidate = blocks.length === 1 ? blocks[0][1] : text;
     try {
-        const selection = selectionSchema.parse(JSON.parse(fenced ? fenced[1] : text));
+        const selection = selectionSchema.parse(JSON.parse(candidate));
         return digestSchema.parse({
             ...selection,
             stories: selection.stories.map((story) => ({
@@ -196,6 +197,8 @@ export async function runCopilot(prompt: string): Promise<string> {
                 "--model",
                 process.env.COPILOT_MODEL || "auto",
                 "--output-format=text",
+                "--stream=off",
+                "--no-color",
                 "--no-ask-user",
                 "--no-custom-instructions",
                 "--disable-builtin-mcps",

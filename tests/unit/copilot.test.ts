@@ -23,12 +23,31 @@ const modelResponse = (digest: ResearchResult["digest"]) =>
         })),
     });
 
-test("Copilot JSON accepts one code fence but rejects surrounding prose", () => {
+test("Copilot JSON extracts one code fence and rejects multiple candidate objects", () => {
     const json = modelResponse(fixture.digest);
     assert.deepEqual(parseDigestResponse("```json\n" + json + "\n```", [source]), fixture.digest);
+    assert.deepEqual(
+        parseDigestResponse("Explanation\n```json\n" + json + "\n```\nDone", [source]),
+        fixture.digest,
+    );
     assert.throws(
-        () => parseDigestResponse("Explanation\n```json\n" + json + "\n```", [source]),
+        () =>
+            parseDigestResponse("```json\n" + json + "\n```\n```json\n" + json + "\n```", [source]),
         /valid digest/,
+    );
+});
+
+test("model-supplied metadata is discarded and unknown citations fail", () => {
+    const modified = structuredClone(fixture.digest);
+    modified.stories[0].sources[0].publishedAt = "2099-01-01";
+    assert.equal(
+        parseDigestResponse(JSON.stringify(modified), [source]).stories[0].sources[0].publishedAt,
+        source.publishedAt,
+    );
+    modified.stories[0].sources[0].url = "https://example.org/invented";
+    assert.throws(
+        () => parseDigestResponse(JSON.stringify(modified), [source]),
+        /source URL not in collected/,
     );
 });
 const request: ResearchRequest = {
