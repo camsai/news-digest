@@ -7,18 +7,27 @@ import {
     type ResearchResult,
 } from "../../scripts/research";
 import { parseFeed, fetchFeed, type FeedSource } from "../../scripts/sourceFeeds";
-import { parseDigestResponse } from "../../scripts/research";
+import { parseDigestResponse, validateCollectedSources } from "../../scripts/research";
 
 const fixture: ResearchResult = JSON.parse(
     await readFile(new URL("../fixtures/research.json", import.meta.url), "utf8"),
 );
 const source = fixture.digest.stories[0].sources[0] as FeedSource;
 
+const modelResponse = (digest: ResearchResult["digest"]) =>
+    JSON.stringify({
+        ...digest,
+        stories: digest.stories.map((story) => ({
+            ...story,
+            sources: story.sources.map((source) => ({ url: source.url })),
+        })),
+    });
+
 test("Copilot JSON accepts one code fence but rejects surrounding prose", () => {
-    const json = JSON.stringify(fixture.digest);
-    assert.deepEqual(parseDigestResponse("```json\n" + json + "\n```"), fixture.digest);
+    const json = modelResponse(fixture.digest);
+    assert.deepEqual(parseDigestResponse("```json\n" + json + "\n```", [source]), fixture.digest);
     assert.throws(
-        () => parseDigestResponse("Explanation\n```json\n" + json + "\n```"),
+        () => parseDigestResponse("Explanation\n```json\n" + json + "\n```", [source]),
         /valid digest/,
     );
 });
@@ -39,11 +48,12 @@ test("Copilot gets independently collected evidence and preserves collection gap
         async () => [source],
         async (prompt) => {
             assert.ok(prompt.includes(source.evidence));
-            return JSON.stringify(fixture.digest);
+            return modelResponse(fixture.digest);
         },
     );
     const result = await provider.research(request);
     assert.deepEqual(result.consultedUrls, [source.url]);
+    assert.deepEqual(result.digest.stories[0].sources[0], source);
     assert.match(result.digest.coverageGaps.join(" "), /Broader web coverage/);
 });
 
@@ -83,11 +93,10 @@ test("invented dates, evidence, and access levels are rejected", async () => {
     ]) {
         const digest = structuredClone(fixture.digest);
         Object.assign(digest.stories[0].sources[0], change);
-        const provider = new CopilotResearchProvider(
-            async () => [source],
-            async () => JSON.stringify(digest),
+        assert.throws(
+            () => validateCollectedSources(digest, [source]),
+            /differs from collected evidence/,
         );
-        await assert.rejects(provider.research(request), /differs from collected evidence/);
     }
 });
 
@@ -103,7 +112,7 @@ test("malformed model output and unsupported submission attribution are rejected
     await assert.rejects(
         new CopilotResearchProvider(
             async () => [source],
-            async () => JSON.stringify(digest),
+            async () => modelResponse(digest),
         ).research(request),
         /Submission lacks/,
     );
