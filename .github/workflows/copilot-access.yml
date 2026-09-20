@@ -3,7 +3,6 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-  copilot-requests: write
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -19,7 +18,7 @@ jobs:
       - run: npm ci
       - name: Verify native Copilot access without source data or repository writes
         env:
-          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.TB_COPILOT_TOKEN_01 }}
           COPILOT_HOME: ${{ runner.temp }}/copilot-access
           COPILOT_CACHE_HOME: ${{ runner.temp }}/copilot-cache
         run: >-

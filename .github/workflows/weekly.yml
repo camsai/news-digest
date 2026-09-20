@@ -15,7 +15,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      copilot-requests: write
       issues: read
     outputs:
       date: ${{ steps.edition.outputs.date }}
@@ -46,7 +45,7 @@ jobs:
       - name: Research and draft
         if: steps.edition.outputs.exists != 'true'
         env:
-          COPILOT_GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_GITHUB_TOKEN: ${{ secrets.TB_COPILOT_TOKEN_01 }}
           COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
           GITHUB_TOKEN: ${{ github.token }}
           EDITION_DATE: ${{ steps.edition.outputs.date }}
