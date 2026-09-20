@@ -41,9 +41,7 @@ export const digestSchema = z
 
 export type Digest = z.infer<typeof digestSchema>;
 const selectionSchema = digestSchema.extend({
-    stories: z.array(
-        storySchema.extend({ sources: z.array(z.object({ url: z.string() }).strict()) }),
-    ),
+    stories: z.array(storySchema.extend({ sources: z.array(z.object({ url: z.string() })) })),
 });
 
 export function parseDigestResponse(response: string, sources: FeedSource[]): Digest {
@@ -64,8 +62,14 @@ export function parseDigestResponse(response: string, sources: FeedSource[]): Di
                 }),
             })),
         });
-    } catch {
-        throw new Error("Copilot response is not a valid digest JSON object");
+    } catch (error) {
+        const reason =
+            error instanceof SyntaxError
+                ? "JSON syntax"
+                : error instanceof z.ZodError
+                  ? `schema: ${error.issues.map((issue) => issue.code).join(", ")}`
+                  : "source URL not in collected records";
+        throw new Error(`Copilot response is not a valid digest JSON object (${reason})`);
     }
 }
 export interface ResearchSettings {
