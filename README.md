@@ -5,7 +5,7 @@ original sources. Articles are not independently human fact-checked. Publication
 does not change their AI authorship or establish scientific accuracy.
 
 - **Repository:** https://github.com/camsai/news-digest
-- **Intended website:** https://camsai.github.io/news-digest/
+- **Website:** https://camsai.github.io/news-digest/
 - **Plan:** [AI for materials publication](plan/upcoming/2026-09-12-ai-materials-news-outlet.md)
 - **Tracking:** [Issue #1](https://github.com/camsai/news-digest/issues/1)
 - **Custom domain:** [Deploy at digest.example.com](docs/hosting.md)
@@ -13,19 +13,13 @@ does not change their AI authorship or establish scientific accuracy.
 
 ## Current state
 
-The repository is private while the implementation is under review. Merging this PR into main
-is intended to publish the launch article automatically.
+The repository is public and GitHub Pages is live at
+https://camsai.github.io/news-digest/. The launch field note is retrospective background.
 
-The repository was transferred to CAMSAI on 2026-09-13. Its default publication address is
-https://camsai.github.io/news-digest/; no custom domain is configured.
+Copilot generation uses the organization Actions secret `TB_COPILOT_TOKEN_01`. It authenticates
+as the token owner and uses that person’s Copilot seat and policies. GitHub repository operations
+continue to use the separate built-in workflow token. The Copilot access check has passed.
 
-Initial implementation lives on `feature/publication-foundation`. `main` deliberately contains
-only an empty initial commit. The site and schedule are not live until reviewed code is merged.
-The launch article is explicitly labeled retrospective background, not fresh weekly news.
-The three editorial labels exist. Pages is currently unavailable: GitHub rejected setup with
-HTTP 422 because CAMSAI’s current plan does not support Pages for this private repository.
-Keep the repository private; enable a plan supporting private-repository Pages before merging
-to launch. The deployment workflow configures Pages and deploys on pushes to main.
 Workflow-created PRs are not enabled: GitHub combines PR creation and review approval in
 one setting, and automatic approval review rejected enabling that broader permission without
 explicit user approval. The weekly workflow retains its validated draft as a downloadable
@@ -54,19 +48,16 @@ select Python with pyenv and install it in `agents/workdir/venv`; do not install
 
 ## Publishing setup
 
-1. Review the implementation and merge it into `main` when ready to launch.
-2. Resolve the private-repository Pages plan requirement. The workflow then enables Pages
-   with **GitHub Actions** as the build source.
+1. GitHub Pages is enabled with **GitHub Actions** as its build source.
+2. Keep `TB_COPILOT_TOKEN_01` available to this repository and renew it before expiration.
 3. The Publish workflow validates and deploys the static `dist/` artifact on pushes to main.
    This includes the published launch article, “From predicting crystals to designing them,”
    on the homepage, article page and RSS. It does not wait for Copilot or a weekly draft.
 4. With explicit approval, enable **Allow GitHub Actions to create and approve pull requests**
    in Settings → Actions → General. This is a combined GitHub permission; the supplied workflow
    creates draft PRs and contains no step that approves reviews or merges them.
-5. Enable CAMSAI’s **Allow use of Copilot CLI billed to the organization** policy and confirm
-   its Copilot usage budget. The workflow uses the ephemeral `GITHUB_TOKEN` with
-   `copilot-requests: write`; no model-provider API key or personal access token is required.
-   Optionally set repository variable `COPILOT_MODEL`; otherwise Copilot selects `auto`.
+5. Confirm the token owner’s Copilot CLI policy and usage allowance. Optionally set repository
+   variable `COPILOT_MODEL`; otherwise Copilot selects `auto`. No OpenAI API key is used.
 6. Enable workflow failure notifications in your GitHub notification settings. Manually run
    **Draft weekly edition** once and check its PR, evidence, and usage before relying on the schedule.
 
@@ -77,7 +68,7 @@ Existing edition branches are preserved rather than overwritten or regenerated a
 
 ## Research and review
 
-The generator uses the pinned GitHub Copilot CLI. Authentication and billing stay with GitHub.
+The generator uses the pinned GitHub Copilot CLI. Authentication and billing stay with GitHub, through the token owner’s Copilot seat.
 [GitHub documents this Actions authentication route](https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli-in-actions).
 This removes separate AI/search provider accounts and keys; it does not make model usage free.
 
@@ -96,7 +87,7 @@ Generation has read-only repository permissions. A separate job creates the draf
 
 The intended live entry point is **Draft weekly edition** in Actions after merging. For local
 experiments, supply a Copilot-compatible token through `COPILOT_GITHUB_TOKEN` securely; a
-normal classic GitHub PAT is not a substitute. The deployment path does not need a stored token.
+normal classic GitHub PAT is not a substitute. The workflow reads its stored token from the organization secret.
 
 ```sh
 npm run digest -- --log-level info
@@ -117,11 +108,12 @@ facts, novelty, affiliations, caveats, and citations. Change `status: draft` to 
 and remove the editorial draft notice only after review. Drafts and future-dated articles are
 excluded from the site, archive, topic pages, and RSS. Failed validation leaves the old site intact.
 
-Copilot billing is controlled by CAMSAI’s organization policy and budget. The evidence records
-the requested model and invocation count; silent CLI output does not report token usage.
+Copilot billing and feature access follow the token owner’s seat and its managing organization. The evidence records
+the requested model and invocation count; token usage is not captured in the evidence record.
 Collectors have been checked against live endpoints, and the pinned CLI flags have been checked.
-Authenticated Copilot generation and the publication pilot are still pending; no live model
-result or deployment is claimed.
+Authenticated Copilot generation passed in [run 35496396445](https://github.com/camsai/news-digest/actions/runs/35496396445).
+The September 14 edition was reviewed by AI against its collected abstracts for publication.
+Automatic draft PR creation remains blocked by the repository permission setting.
 
 ## Community submissions
 
