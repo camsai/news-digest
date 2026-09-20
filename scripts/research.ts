@@ -40,6 +40,16 @@ export const digestSchema = z
     .strict();
 
 export type Digest = z.infer<typeof digestSchema>;
+
+export function parseDigestResponse(response: string): Digest {
+    const text = response.trim();
+    const fenced = text.match(/^```(?:json)?\s*\n([\s\S]*?)\n```$/i);
+    try {
+        return digestSchema.parse(JSON.parse(fenced ? fenced[1] : text));
+    } catch {
+        throw new Error("Copilot response is not a valid digest JSON object");
+    }
+}
 export interface ResearchSettings {
     lookbackDays: number;
     maximumCandidates: number;
@@ -299,7 +309,7 @@ export class CopilotResearchProvider implements ResearchProvider {
                 coverageGaps: gaps,
             }),
         ].join("\n");
-        const digest = digestSchema.parse(JSON.parse((await this.generate_(prompt)).trim()));
+        const digest = parseDigestResponse(await this.generate_(prompt));
         validateCollectedSources(digest, sources);
         for (const story of digest.stories) {
             for (const identifier of story.submissionIds) {
