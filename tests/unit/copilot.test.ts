@@ -7,12 +7,29 @@ import {
     type ResearchResult,
 } from "../../scripts/research";
 import { parseFeed, fetchFeed, type FeedSource } from "../../scripts/sourceFeeds";
-import { parseDigestResponse, validateCollectedSources } from "../../scripts/research";
+import {
+    parseDigestResponse,
+    validateCollectedSources,
+    finalCopilotMessage,
+} from "../../scripts/research";
 
 const fixture: ResearchResult = JSON.parse(
     await readFile(new URL("../fixtures/research.json", import.meta.url), "utf8"),
 );
 const source = fixture.digest.stories[0].sources[0] as FeedSource;
+
+test("CLI events use the final complete message without deltas or earlier commentary", () => {
+    const output = [
+        { type: "assistant.message", data: { content: "Earlier commentary" } },
+        { type: "assistant.message_delta", data: { deltaContent: "Partial" } },
+        { type: "assistant.message", data: { content: "Final answer" } },
+        { type: "result", usage: {} },
+    ]
+        .map((event) => JSON.stringify(event))
+        .join("\n");
+    assert.equal(finalCopilotMessage(output), "Final answer");
+    assert.throws(() => finalCopilotMessage('{"type":"result"}'), /no final/);
+});
 
 const modelResponse = (digest: ResearchResult["digest"]) =>
     JSON.stringify({

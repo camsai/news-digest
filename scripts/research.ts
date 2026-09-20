@@ -40,6 +40,22 @@ export const digestSchema = z
     .strict();
 
 export type Digest = z.infer<typeof digestSchema>;
+
+export function finalCopilotMessage(output: string): string {
+    let finalMessage: string | undefined;
+    for (const line of output.split("\n").filter((line) => line.trim())) {
+        let event;
+        try {
+            event = JSON.parse(line);
+        } catch {
+            throw new Error("Invalid Copilot event stream");
+        }
+        if (event.type === "assistant.message" && typeof event.data?.content === "string")
+            finalMessage = event.data.content;
+    }
+    if (!finalMessage) throw new Error("Copilot returned no final assistant message");
+    return finalMessage;
+}
 const selectionSchema = digestSchema.extend({
     stories: z.array(storySchema.extend({ sources: z.array(z.object({ url: z.string() })) })),
 });
@@ -196,7 +212,7 @@ export async function runCopilot(prompt: string): Promise<string> {
                 "-s",
                 "--model",
                 process.env.COPILOT_MODEL || "auto",
-                "--output-format=text",
+                "--output-format=json",
                 "--stream=off",
                 "--no-color",
                 "--no-ask-user",
@@ -213,7 +229,7 @@ export async function runCopilot(prompt: string): Promise<string> {
             {
                 cwd: directory,
                 timeout: 240_000,
-                maxBuffer: 256_000,
+                maxBuffer: 1_000_000,
                 env: {
                     PATH: process.env.PATH,
                     COPILOT_HOME: directory,
@@ -224,7 +240,7 @@ export async function runCopilot(prompt: string): Promise<string> {
                 },
             },
         );
-        return stdout;
+        return finalCopilotMessage(stdout);
     } catch (error) {
         // Do not include subprocess output or its prompt (which includes private submissions).
         const failure = error as { stderr?: string; code?: string | number; killed?: boolean };
