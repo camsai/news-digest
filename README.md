@@ -20,10 +20,9 @@ Copilot generation uses the organization Actions secret `TB_COPILOT_TOKEN_01`. I
 as the token owner and uses that person’s Copilot seat and policies. GitHub repository operations
 continue to use the separate built-in workflow token. The Copilot access check has passed.
 
-Workflow-created PRs are not enabled: GitHub combines PR creation and review approval in
-one setting, and automatic approval review rejected enabling that broader permission without
-explicit user approval. The weekly workflow retains its validated draft as a downloadable
-Actions artifact before attempting PR creation.
+Workflow-created draft PRs are enabled. GitHub combines PR creation and review approval
+in one repository setting; the workflow only creates drafts and does not approve or merge them.
+Validated outputs are also retained as downloadable Actions artifacts.
 
 ## Local development
 
@@ -53,7 +52,7 @@ select Python with pyenv and install it in `agents/workdir/venv`; do not install
 3. The Publish workflow validates and deploys the static `dist/` artifact on pushes to main.
    This includes the published launch article, “From predicting crystals to designing them,”
    on the homepage, article page and RSS. It does not wait for Copilot or a weekly draft.
-4. With explicit approval, enable **Allow GitHub Actions to create and approve pull requests**
+4. Keep enabled **Allow GitHub Actions to create and approve pull requests**
    in Settings → Actions → General. This is a combined GitHub permission; the supplied workflow
    creates draft PRs and contains no step that approves reviews or merges them.
 5. Confirm the token owner’s Copilot CLI policy and usage allowance. Optionally set repository
@@ -61,7 +60,7 @@ select Python with pyenv and install it in `agents/workdir/venv`; do not install
 6. Enable workflow failure notifications in your GitHub notification settings. Manually run
    **Draft weekly edition** once and check its PR, evidence, and usage before relying on the schedule.
 
-The weekly schedule is Monday 13:17 UTC (06:17 PDT / 05:17 PST). GitHub schedules can be
+The weekly schedule is Monday 00:00 UTC (09:00 JST). GitHub schedules can be
 delayed or dropped and need the workflow on the default branch. A Monday date identifies each
 edition even when a manual run happens later that week; the coverage window ends on that Monday.
 Existing edition branches are preserved rather than overwritten or regenerated at additional cost.
@@ -113,7 +112,7 @@ the requested model and invocation count; token usage is not captured in the evi
 Collectors have been checked against live endpoints, and the pinned CLI flags have been checked.
 Authenticated Copilot generation passed in [run 35496396445](https://github.com/camsai/news-digest/actions/runs/35496396445).
 The September 14 edition was reviewed by AI against its collected abstracts for publication.
-Automatic draft PR creation remains blocked by the repository permission setting.
+The repository permission for automatic draft PR creation was enabled on September 27.
 
 ## Community submissions
 
