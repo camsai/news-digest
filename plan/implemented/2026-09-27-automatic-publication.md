@@ -6,7 +6,10 @@
 
 ## Status
 
-Implemented; live workflow verification pending.
+Shipped and verified. Workflow run 36285830494 restored the waiting September 21 edition,
+validated it, automatically merged PR #4 and dispatched Pages run 36285899664. Both runs
+succeeded. The homepage, article and RSS returned HTTP 200 with the edition present.
+No implementation divergences or required open items remain for this change.
 
 The user authorized publication without manual review. Monday 00:00 UTC generation now
 prepares published metadata and an explicit AI-only automatic-publication disclosure,
