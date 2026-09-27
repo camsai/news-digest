@@ -21,7 +21,7 @@ as the token owner and uses that person’s Copilot seat and policies. GitHub re
 continue to use the separate built-in workflow token. The Copilot access check has passed.
 
 Workflow-created draft PRs require the CAMSAI organization policy and repository setting.
-The organization policy currently blocks them. GitHub combines PR creation and review approval
+Both permissions are enabled. GitHub combines PR creation and review approval
 in one repository setting; the workflow only creates drafts and does not approve or merge them.
 Validated outputs are also retained as downloadable Actions artifacts.
 
@@ -113,8 +113,8 @@ the requested model and invocation count; token usage is not captured in the evi
 Collectors have been checked against live endpoints, and the pinned CLI flags have been checked.
 Authenticated Copilot generation passed in [run 35496396445](https://github.com/camsai/news-digest/actions/runs/35496396445).
 The September 14 edition was reviewed by AI against its collected abstracts for publication.
-On September 27, the schedule changed to Monday 00:00 UTC. PR creation remains blocked
-by the CAMSAI organization policy pending its approval.
+On September 27, the schedule changed to Monday 00:00 UTC and automatic draft PR
+creation was enabled at both the organization and repository levels.
 
 ## Community submissions
 
