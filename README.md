@@ -22,7 +22,7 @@ continue to use the separate built-in workflow token. The Copilot access check h
 
 Workflow-created draft PRs require the CAMSAI organization policy and repository setting.
 Both permissions are enabled. GitHub combines PR creation and review approval
-in one repository setting; the workflow only creates drafts and does not approve or merge them.
+in one repository setting; the workflow creates a publication PR, merges its validated head automatically, and explicitly dispatches Pages deployment.
 Validated outputs are also retained as downloadable Actions artifacts.
 
 ## Local development
@@ -55,11 +55,11 @@ select Python with pyenv and install it in `agents/workdir/venv`; do not install
    on the homepage, article page and RSS. It does not wait for Copilot or a weekly draft.
 4. Keep enabled **Allow GitHub Actions to create and approve pull requests**
    in Settings → Actions → General. This is a combined GitHub permission; the supplied workflow
-   creates draft PRs and contains no step that approves reviews or merges them.
+   creates and automatically merges publication PRs, without submitting approving reviews.
 5. Confirm the token owner’s Copilot CLI policy and usage allowance. Optionally set repository
    variable `COPILOT_MODEL`; otherwise Copilot selects `auto`. No OpenAI API key is used.
 6. Enable workflow failure notifications in your GitHub notification settings. Manually run
-   **Draft weekly edition** once and check its PR, evidence, and usage before relying on the schedule.
+   **Publish weekly edition** once and check its PR, evidence, and usage before relying on the schedule.
 
 The weekly schedule is Monday 00:00 UTC (09:00 JST). GitHub schedules can be
 delayed or dropped and need the workflow on the default branch. A Monday date identifies each
@@ -83,7 +83,7 @@ There is no automatic retry. A four-minute timeout and output-size limit bound e
 not monetary cost. Copilot cannot run shell commands, read files, write files, or browse;
 its only exposed tool is web_fetch, with URL access explicitly denied. Built-in MCP servers
 and custom instructions are disabled, and configuration is isolated under the agents workdir.
-Generation has read-only repository permissions. A separate job creates the draft PR.
+Generation has read-only repository permissions. A separate job creates and merges the publication PR, then dispatches Pages deployment.
 
 The intended live entry point is **Draft weekly edition** in Actions after merging. For local
 experiments, supply a Copilot-compatible token through `COPILOT_GITHUB_TOKEN` securely; a
@@ -104,8 +104,8 @@ claim, nor detect all semantic duplicates. AI-authorship and non-verification di
 visible even when a maintainer approves a publication PR.
 
 Review the originating Actions run and `evidence.json`, including coverage gaps and usage. Check
-facts, novelty, affiliations, caveats, and citations. Change `status: draft` to `status: published`
-and remove the editorial draft notice only after review. Drafts and future-dated articles are
+facts, novelty, affiliations, caveats, and citations. The scheduled workflow changes `status: draft` to `status: published` and retains an explicit
+automatic-publication disclosure before validation, PR creation and merge. Drafts and future-dated articles are
 excluded from the site, archive, topic pages, and RSS. Failed validation leaves the old site intact.
 
 Copilot billing and feature access follow the token owner’s seat and its managing organization. The evidence records
@@ -125,5 +125,5 @@ after merge. A submitted URL must match a retrieved source before Copilot can co
 otherwise the evidence record flags it for a new curated source or manual research. The publication records consumed submission identifiers and source URLs to avoid
 repeat coverage. After successful deployment, mark covered issues published and close them manually.
 
-The initial release does not auto-publish, close issues automatically, send newsletters, or run
+Weekly editions publish automatically after content checks, tests and build pass. The workflow does not close issues automatically, send newsletters, or run
 an independent freshness monitor. The plan tracks those follow-ups and the reviewed pilot.

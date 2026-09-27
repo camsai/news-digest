@@ -1,4 +1,4 @@
-name: Draft weekly edition
+name: Publish weekly edition
 on:
   schedule:
     - cron: "0 0 * * 1"
@@ -36,20 +36,35 @@ jobs:
           edition_date=$(node -e 'const date = new Date(); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7)); process.stdout.write(date.toISOString().slice(0, 10));')
           echo "date=$edition_date" >> "$GITHUB_OUTPUT"
           matching_branches=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/editorial/$edition_date" --jq length)
-          if test -f "src/content/articles/$edition_date-weekly-digest.md" || test "$matching_branches" -gt 0; then
+          if test -f "src/content/articles/$edition_date-weekly-digest.md"; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "An edition or editorial branch already exists for $edition_date. Preserving it; review the existing draft." >> "$GITHUB_STEP_SUMMARY"
+            echo "An edition or editorial branch already exists for $edition_date. Preserving the existing edition." >> "$GITHUB_STEP_SUMMARY"
           fi
+          if test "$matching_branches" -gt 0; then echo "branch=true" >> "$GITHUB_OUTPUT"; fi
       - if: steps.edition.outputs.exists != 'true'
         run: npm ci
+      - name: Restore existing edition without rerunning Copilot
+        if: steps.edition.outputs.exists != 'true' && steps.edition.outputs.branch == 'true'
+        env:
+          EDITION_DATE: ${{ steps.edition.outputs.date }}
+        run: |
+          git fetch origin "refs/heads/editorial/$EDITION_DATE"
+          mkdir -p "data/research/$EDITION_DATE"
+          git show "FETCH_HEAD:src/content/articles/$EDITION_DATE-weekly-digest.md" > "src/content/articles/$EDITION_DATE-weekly-digest.md"
+          git show "FETCH_HEAD:data/research/$EDITION_DATE/evidence.json" > "data/research/$EDITION_DATE/evidence.json"
       - name: Research and draft
-        if: steps.edition.outputs.exists != 'true'
+        if: steps.edition.outputs.exists != 'true' && steps.edition.outputs.branch != 'true'
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.TB_COPILOT_TOKEN_01 }}
           COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
           GITHUB_TOKEN: ${{ github.token }}
           EDITION_DATE: ${{ steps.edition.outputs.date }}
         run: npm run digest -- --date "$EDITION_DATE" --log-level info
+      - name: Prepare automatic publication
+        if: steps.edition.outputs.exists != 'true'
+        env:
+          EDITION_DATE: ${{ steps.edition.outputs.date }}
+        run: node --import tsx scripts/publishEdition.ts "$EDITION_DATE"
       - name: Validate generated content before opening a PR
         if: steps.edition.outputs.exists != 'true'
         run: npm run format && npm run check && npm test && npm run build
@@ -70,26 +85,37 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: editorial-draft-${{ needs.draft.outputs.date }}
           path: .
-      - name: Open editorial draft
+      - name: Open publication PR
+        id: publication
         uses: peter-evans/create-pull-request@v7
         with:
           branch: editorial/${{ needs.draft.outputs.date }}
           base: main
           commit-message: "Draft weekly edition ${{ needs.draft.outputs.date }}"
           title: "Weekly edition: ${{ needs.draft.outputs.date }}"
-          draft: true
+          draft: false
           add-paths: |
             src/content/articles/*-weekly-digest.md
             data/research/**
           body: |
-            AI-assisted editorial draft. Generation, schema validation, tests, and build ran in the originating workflow.
-
-            Review the article and its data/research evidence record. Check every claim, date, source type, limitation, contributor affiliation, and previous coverage. Read coverageGaps and usage in the evidence record.
-
-            Keep this PR in draft until review is complete. Change article status to published and remove the editorial-draft notice before merging. After successful Pages deployment, mark originating issues editorial:published and close them.
+            Entirely AI-generated edition. Automated content validation, tests and build passed before PR creation.
+            This PR is merged automatically by the weekly workflow. Evidence is retained in data/research; no human fact-check is claimed.
+      - name: Merge validated edition and trigger Pages
+        if: steps.publication.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.publication.outputs.pull-request-number }}
+          HEAD_SHA: ${{ steps.publication.outputs.pull-request-head-sha }}
+        run: |
+          if test "$(gh pr view "$PR_NUMBER" --json isDraft --jq .isDraft)" = true; then
+            gh pr ready "$PR_NUMBER"
+          fi
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/merge" -f sha="$HEAD_SHA" -f merge_method=squash --jq .merged | grep -qx true
+          gh workflow run deploy.yml --ref main

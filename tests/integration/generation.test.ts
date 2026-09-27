@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdir, mkdtemp, copyFile, readFile, rm, access } from "node:fs/promises";
+import { mkdir, mkdtemp, copyFile, readFile, rm, access, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { execFile } from "node:child_process";
@@ -42,6 +42,27 @@ test("offline generation creates an unpublished draft and evidence, then refuses
             execute(process.execPath, argumentsList, { cwd: directory, env: environment }),
             /Edition already exists/,
         );
+        const publicationArguments = [
+            "--import",
+            resolve("node_modules/tsx/dist/loader.mjs"),
+            resolve("scripts/publishEdition.ts"),
+            "2026-09-07",
+        ];
+        await assert.rejects(
+            execute(process.execPath, publicationArguments, { cwd: directory, env: environment }),
+            /matching live evidence/,
+        );
+        const evidencePath = directory + "/data/research/2026-09-07/evidence.json";
+        const evidence = JSON.parse(await readFile(evidencePath, "utf8"));
+        evidence.fixture = false;
+        await writeFile(evidencePath, JSON.stringify(evidence));
+        await execute(process.execPath, publicationArguments, { cwd: directory, env: environment });
+        const published = matter(
+            await readFile(directory + "/src/content/articles/2026-09-07-weekly-digest.md", "utf8"),
+        );
+        assert.equal(published.data.status, "published");
+        assert.match(published.content, /automatically published/);
+        assert.match(published.content, /Not independently human fact-checked/);
     } finally {
         await rm(directory, { recursive: true, force: true });
     }
