@@ -176,3 +176,62 @@ test("unsafe feeds and entity declarations are rejected", async () => {
         /forbidden/,
     );
 });
+
+test("transient feed failure recovers before generation", async () => {
+    let attempts = 0;
+    const provider = new CopilotResearchProvider(
+        async () => {
+            attempts += 1;
+            if (attempts === 1) throw new Error("Feed HTTP 503");
+            return [source];
+        },
+        async () => modelResponse(fixture.digest),
+    );
+    const result = await provider.research(request);
+    assert.equal(attempts, 2);
+    assert.equal(result.digest.stories.length, 1);
+});
+
+test("relevant evidence survives the candidate cap and empty selection gets one retry", async () => {
+    const relevant = { ...source, title: "Machine learning for materials discovery" };
+    let calls = 0;
+    const provider = new CopilotResearchProvider(
+        async () => [
+            {
+                ...source,
+                url: "https://example.org/unrelated",
+                title: "Unrelated measurement",
+                evidence:
+                    "A measurement of an ordinary physical property without computational methods.",
+            },
+            relevant,
+        ],
+        async (prompt) => {
+            assert.ok(prompt.includes(relevant.title));
+            calls += 1;
+            return modelResponse(calls === 1 ? { ...fixture.digest, stories: [] } : fixture.digest);
+        },
+    );
+    const result = await provider.research({
+        ...request,
+        settings: { ...request.settings, maximumCandidates: 1 },
+    });
+    assert.equal(calls, 2);
+    assert.equal((result.usage as { invocations: number }).invocations, 2);
+});
+
+test("repeated empty selections fail closed with bounded diagnostics", async () => {
+    let calls = 0;
+    const provider = new CopilotResearchProvider(
+        async () => [source],
+        async () => {
+            calls += 1;
+            return modelResponse({ ...fixture.digest, stories: [] });
+        },
+    );
+    await assert.rejects(
+        provider.research(request),
+        /no stories after 2 attempts; fresh candidates=1, supplied=1/,
+    );
+    assert.equal(calls, 2);
+});

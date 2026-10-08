@@ -78,8 +78,11 @@ date window; GitHub release endpoints retrieve up to 30 releases per project. Th
 HTTP endpoints require no API key. This is curated discovery, not unrestricted web search.
 Unavailable feeds, omitted candidates, and unsupported submissions are recorded as gaps.
 
-Copilot receives the collected excerpts and a JSON schema in one bounded CLI invocation.
-There is no automatic retry. A four-minute timeout and output-size limit bound execution,
+Copilot receives the collected excerpts and a JSON schema, with at most two invocations when
+the first selection is empty. Public feed failures get up to three attempts. AI-related records
+are prioritized before the candidate and prompt-size limits. Repeated empty selections stop
+publication and report collection counts without logging source or submission text.
+A four-minute per-invocation timeout and output-size limit bound execution,
 not monetary cost. Copilot cannot run shell commands, read files, write files, or browse;
 its only exposed tool is web_fetch, with URL access explicitly denied. Built-in MCP servers
 and custom instructions are disabled, and configuration is isolated under the agents workdir.

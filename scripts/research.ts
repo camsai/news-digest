@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
@@ -267,6 +268,14 @@ export async function runCopilot(prompt: string): Promise<string> {
     }
 }
 
+export function sourceRelevance(source: FeedSource): number {
+    const terms =
+        /machine.learning|deep.learning|neural|foundation.model|language.model|generative|active.learning|agentic|autonomous|interatomic.potential|moment.tensor.potential|artificial.intelligence/gi;
+    return (
+        (source.title.match(terms)?.length ?? 0) * 3 + (source.evidence.match(terms)?.length ?? 0)
+    );
+}
+
 export class CopilotResearchProvider implements ResearchProvider {
     constructor(
         private collectFeed_: typeof fetchFeed = fetchFeed,
@@ -281,13 +290,24 @@ export class CopilotResearchProvider implements ResearchProvider {
         earliest.setUTCDate(earliest.getUTCDate() - request.settings.lookbackDays);
         const previous = new Set(request.previouslyPublishedUrls.map(canonicalUrl));
         const collected = new Map<string, FeedSource>();
+        let failedFeeds = 0;
         for (const feed of request.settings.sourceFeeds) {
             try {
-                for (const source of await this.collectFeed_(
-                    feed,
-                    request.editionDate,
-                    request.settings.lookbackDays,
-                )) {
+                let records: FeedSource[] = [];
+                for (let attempt = 0; attempt < 3; attempt += 1) {
+                    try {
+                        records = await this.collectFeed_(
+                            feed,
+                            request.editionDate,
+                            request.settings.lookbackDays,
+                        );
+                        break;
+                    } catch (error) {
+                        if (attempt === 2) throw error;
+                        await delay(1000 * (attempt + 1));
+                    }
+                }
+                for (const source of records) {
                     if (
                         source.publishedAt >= earliest.toISOString().slice(0, 10) &&
                         source.publishedAt <= request.editionDate &&
@@ -296,6 +316,7 @@ export class CopilotResearchProvider implements ResearchProvider {
                         collected.set(canonicalUrl(source.url), source);
                 }
             } catch (error) {
+                failedFeeds += 1;
                 const message =
                     error instanceof Error ? error.message : "Unknown retrieval failure";
                 const reason =
@@ -312,6 +333,7 @@ export class CopilotResearchProvider implements ResearchProvider {
         const candidates = [...collected.values()].sort(
             (first, second) =>
                 Number(submittedUrls.has(second.url)) - Number(submittedUrls.has(first.url)) ||
+                sourceRelevance(second) - sourceRelevance(first) ||
                 second.publishedAt.localeCompare(first.publishedAt),
         );
         const sources: FeedSource[] = [];
@@ -350,7 +372,22 @@ export class CopilotResearchProvider implements ResearchProvider {
                 coverageGaps: gaps,
             }),
         ].join("\n");
-        const digest = parseDigestResponse(await this.generate_(prompt), sources);
+        let invocations = 1;
+        let digest = parseDigestResponse(await this.generate_(prompt), sources);
+        if (!digest.stories.length) {
+            invocations += 1;
+            digest = parseDigestResponse(
+                await this.generate_(
+                    prompt +
+                        "\nA previous attempt selected no stories. Reassess the supplied evidence for relevant developments. Abstract-only evidence is acceptable when labeled and claims are limited to it. Do not invent stories; return an empty list if none qualify.",
+                ),
+                sources,
+            );
+        }
+        if (!digest.stories.length)
+            throw new Error(
+                `Copilot selected no stories after ${invocations} attempts; fresh candidates=${candidates.length}, supplied=${sources.length}, AI-related=${sources.filter((source) => sourceRelevance(source) > 0).length}, failed feeds=${failedFeeds}. No article published.`,
+            );
         validateCollectedSources(digest, sources);
         for (const story of digest.stories) {
             for (const identifier of story.submissionIds) {
@@ -372,7 +409,7 @@ export class CopilotResearchProvider implements ResearchProvider {
             usage: {
                 provider: "github-copilot",
                 requestedModel: process.env.COPILOT_MODEL || "auto",
-                invocations: 1,
+                invocations,
                 billing:
                     "See organization Copilot usage; CLI silent output does not report token usage",
             },
