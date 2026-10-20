@@ -304,7 +304,7 @@ export class CopilotResearchProvider implements ResearchProvider {
                         break;
                     } catch (error) {
                         if (attempt === 2) throw error;
-                        await delay(1000 * (attempt + 1));
+                        await delay(3000 * (attempt + 1));
                     }
                 }
                 for (const source of records) {

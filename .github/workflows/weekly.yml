@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: "0 0 * * 1"
   workflow_dispatch:
+    inputs:
+      edition_date:
+        description: "Edition Monday (YYYY-MM-DD); blank uses the current week"
+        required: false
+        type: string
 permissions:
   contents: read
 concurrency:
@@ -12,7 +17,7 @@ jobs:
   draft:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
       issues: read
@@ -32,8 +37,9 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          REQUESTED_EDITION_DATE: ${{ inputs.edition_date }}
         run: |
-          edition_date=$(node -e 'const date = new Date(); date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7)); process.stdout.write(date.toISOString().slice(0, 10));')
+          edition_date=$(node -e 'const now = new Date(); const requested = process.env.REQUESTED_EDITION_DATE; const date = requested ? new Date(requested) : new Date(now); if (!requested) date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7)); if (!Number.isFinite(date.getTime()) || (requested && (!/^\d{4}-\d{2}-\d{2}$/.test(requested) || date.toISOString().slice(0, 10) !== requested)) || date.getUTCDay() !== 1 || date > now) throw new Error("Edition must be a non-future Monday in YYYY-MM-DD format"); process.stdout.write(date.toISOString().slice(0, 10));')
           echo "date=$edition_date" >> "$GITHUB_OUTPUT"
           matching_branches=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/editorial/$edition_date" --jq length)
           if test -f "src/content/articles/$edition_date-weekly-digest.md"; then

@@ -85,7 +85,7 @@ export async function fetchFeed(
         url.searchParams.set("sortOrder", "descending");
         url.searchParams.set("max_results", "100");
     }
-    const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(30_000) });
+    const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(60_000) });
     if (!response.ok || !response.body) throw new Error(`Feed HTTP ${response.status}`);
     const chunks: Uint8Array[] = [];
     let bytes = 0;

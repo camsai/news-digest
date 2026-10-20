@@ -130,3 +130,8 @@ repeat coverage. After successful deployment, mark covered issues published and 
 
 Weekly editions publish automatically after content checks, tests and build pass. The workflow does not close issues automatically, send newsletters, or run
 an independent freshness monitor. The plan tracks those follow-ups and the reviewed pilot.
+
+To backfill a missed edition, dispatch **Publish weekly edition** with `edition_date` set
+to its original Monday (`YYYY-MM-DD`). Dates must be valid, non-future Mondays. Run
+backfills oldest first so later editions exclude already published sources. Feed requests
+have a 60-second timeout and up to three attempts with increasing delays.

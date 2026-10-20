@@ -15,6 +15,9 @@ test("static publication excludes drafts and future articles, strips raw HTML, a
         for (const path of ["src", "public", "astro.config.mjs", "tsconfig.json", "package.json"]) {
             await cp(path, `${directory}/${path}`, { recursive: true });
         }
+        // Keep the test independent of the growing production archive.
+        await rm(directory + "/src/content/articles", { recursive: true });
+        await mkdir(directory + "/src/content/articles", { recursive: true });
         await symlink(resolve("node_modules"), `${directory}/node_modules`, "dir");
         const articlePath = "src/content/articles/2026-09-12-a-map-of-ai-for-materials.md";
         const article = matter(await readFile(articlePath, "utf8"));
@@ -41,6 +44,16 @@ test("static publication excludes drafts and future articles, strips raw HTML, a
                 article.data,
             ),
         );
+        for (let index = 1; index <= 6; index += 1) {
+            await writeFile(
+                directory + "/src/content/articles/recent-" + index + ".md",
+                matter.stringify("Published regression fixture", {
+                    ...article.data,
+                    title: "Recent publication fixture " + index,
+                    date: "2026-09-" + String(12 + index).padStart(2, "0"),
+                }),
+            );
+        }
         await execute(process.execPath, [resolve("node_modules/astro/bin/astro.mjs"), "build"], {
             cwd: directory,
             env: {
@@ -69,7 +82,15 @@ test("static publication excludes drafts and future articles, strips raw HTML, a
         }
         const feed = await readFile(`${directory}/dist/rss.xml`, "utf8");
         const homepage = await readFile(`${directory}/dist/index.html`, "utf8");
-        assert.ok(homepage.includes(article.data.title), "Launch article must appear on homepage");
+        const archive = await readFile(directory + "/dist/archive/index.html", "utf8");
+        for (let index = 2; index <= 6; index += 1)
+            assert.ok(homepage.includes("Recent publication fixture " + index));
+        assert.ok(!homepage.includes("Recent publication fixture 1"));
+        assert.ok(
+            !homepage.includes(article.data.title),
+            "Older articles leave the five-item homepage",
+        );
+        assert.ok(archive.includes(article.data.title), "Older articles remain in the archive");
         assert.ok(feed.includes(article.data.title), "Launch article must appear in RSS");
         assert.ok(
             filenames.includes("articles/2026-09-12-a-map-of-ai-for-materials/index.html"),
