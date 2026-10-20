@@ -6,8 +6,10 @@
 
 ## Status
 
-Implemented with passing offline policy tests and a read-only check against real history.
-Live recovery-monitor validation is pending.
+Shipped. All 29 tests pass. Live monitor run 39508569157 succeeded and identified all
+current editions as complete, with no unnecessary retry or notification. Retry limits and
+date retention are covered by offline tests; no production failure was fabricated to test
+alert delivery. No deviations or required open implementation items remain.
 
 An independent hourly Actions workflow checks the last 35 days of weekly runs and the live
 site. Original scheduled dates derive from the original run creation timestamp; explicit
