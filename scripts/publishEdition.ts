@@ -15,7 +15,11 @@ try {
         throw new Error("Publication requires matching live evidence");
     const notice =
         "> Entirely AI-generated draft. Not independently human fact-checked. Check every claim and date against the sources before changing status to published.";
-    if (metadata.status !== "draft" || !article.content.includes(notice))
+    const automaticNotice =
+        "> Entirely AI-generated and automatically published after automated validation. Not independently human fact-checked. Automated checks do not establish scientific accuracy.";
+    const alreadyPrepared =
+        metadata.status === "published" && article.content.includes(automaticNotice);
+    if (!alreadyPrepared && (metadata.status !== "draft" || !article.content.includes(notice)))
         throw new Error("Expected an unchanged draft publication notice");
     await writeFile(
         path,

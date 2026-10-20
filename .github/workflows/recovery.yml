@@ -1,0 +1,43 @@
+name: Recover failed editions
+on:
+  schedule:
+    - cron: "43 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+  issues: write
+concurrency:
+  group: edition-recovery
+  cancel-in-progress: false
+jobs:
+  recover:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Retry missing editions or notify after two retries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RECOVERY_NOTIFY_USER: timurbazhirov
+          SITE_URL: ${{ vars.SITE_URL }}
+          SITE_BASE_PATH: ${{ vars.SITE_BASE_PATH }}
+        run: node --import tsx scripts/recoverEditions.ts
+      - name: Notify if the recovery monitor itself fails
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Publication recovery monitor needs attention"
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state all --search "$title in:title" --json title --jq '[.[] | select(.title == "Publication recovery monitor needs attention")] | length')
+          if test "$existing" = 0; then
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --assignee timurbazhirov --body "@timurbazhirov The hourly recovery monitor failed. Inspect https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID."
+          fi

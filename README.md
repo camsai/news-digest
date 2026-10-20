@@ -128,10 +128,24 @@ after merge. A submitted URL must match a retrieved source before Copilot can co
 otherwise the evidence record flags it for a new curated source or manual research. The publication records consumed submission identifiers and source URLs to avoid
 repeat coverage. After successful deployment, mark covered issues published and close them manually.
 
-Weekly editions publish automatically after content checks, tests and build pass. The workflow does not close issues automatically, send newsletters, or run
-an independent freshness monitor. The plan tracks those follow-ups and the reviewed pilot.
+Weekly editions publish automatically after content checks, tests and build pass. The workflow does not close issues automatically or send newsletters.
+An hourly recovery monitor checks failed or missing publications. The plan tracks those follow-ups and the reviewed pilot.
 
 To backfill a missed edition, dispatch **Publish weekly edition** with `edition_date` set
 to its original Monday (`YYYY-MM-DD`). Dates must be valid, non-future Mondays. Run
 backfills oldest first so later editions exclude already published sources. Feed requests
 have a 60-second timeout and up to three attempts with increasing delays.
+
+## Automatic recovery and alerts
+
+**Recover failed editions** checks Actions history and the live site hourly at minute 43 UTC.
+It examines the last 35 days of runs and processes missing editions oldest first. Each edition
+gets at most two automatic recovery runs, keeping its original Monday date. Completed articles
+are not regenerated: if already merged but not live, recovery dispatches Pages instead.
+Running jobs and the first 30 minutes after a run finishes are allowed to settle before retrying.
+
+After two unsuccessful recoveries, the monitor opens one issue per edition, assigned to and
+mentioning `timurbazhirov`, with links to the runs. This generates a GitHub notification; email
+or mobile delivery follows your GitHub notification settings. The monitor also reports its own
+failures through a separate issue. It does not send success notifications or repeat an existing
+edition alert. GitHub schedules can be delayed, so hourly checks are not an exact-time guarantee.

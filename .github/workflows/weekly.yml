@@ -1,9 +1,16 @@
 name: Publish weekly edition
+run-name: "Weekly edition: ${{ inputs.edition_date || 'scheduled' }} | recovery:${{ inputs.recovery_attempt || '0' }}"
 on:
   schedule:
     - cron: "0 0 * * 1"
   workflow_dispatch:
     inputs:
+      recovery_attempt:
+        description: "Recovery monitor attempt"
+        required: false
+        type: choice
+        default: "0"
+        options: ["0", "1", "2"]
       edition_date:
         description: "Edition Monday (YYYY-MM-DD); blank uses the current week"
         required: false

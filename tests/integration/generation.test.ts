@@ -63,6 +63,12 @@ test("offline generation creates an unpublished draft and evidence, then refuses
         assert.equal(published.data.status, "published");
         assert.match(published.content, /automatically published/);
         assert.match(published.content, /Not independently human fact-checked/);
+        await execute(process.execPath, publicationArguments, { cwd: directory, env: environment });
+        const retried = matter(
+            await readFile(directory + "/src/content/articles/2026-09-07-weekly-digest.md", "utf8"),
+        );
+        assert.deepEqual(retried.data, published.data);
+        assert.equal(retried.content, published.content);
     } finally {
         await rm(directory, { recursive: true, force: true });
     }

@@ -1,8 +1,20 @@
 name: Publish
+run-name: "Deploy edition: ${{ inputs.edition_date || 'scheduled' }} | recovery:${{ inputs.recovery_attempt || '0' }}"
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      recovery_attempt:
+        description: "Recovery monitor attempt"
+        required: false
+        type: choice
+        default: "0"
+        options: ["0", "1", "2"]
+      edition_date:
+        description: "Edition being recovered (for tracking only; deploys current main)"
+        required: false
+        type: string
 permissions:
   contents: read
 concurrency:
